@@ -2,16 +2,6 @@
 
 <div align="center">
 
-```text
-           ╔══════════════════════╗
-           ║     Miyabi Core      ║
-           ╚══════════════════════╝
-                      ／l、
-                    （ﾟ､ ｡ ７
-                     l、  ~ヽ
-                     じしf_, )ノ
-```
-
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 [![Root](https://img.shields.io/badge/Root-Magisk%20%7C%20KernelSU%20%7C%20APatch-orange.svg)](#)
 [![Status](https://img.shields.io/badge/Status-Stable-brightgreen.svg)](#)
