@@ -1,0 +1,7 @@
+id=performance-booster-miyabi-core
+name=Performance Booster Miyabi Core
+version=v1.0.0
+versionCode=100
+author=Rama-X2
+description=Ultimate Kernel & System Responsiveness Optimizer (Miyabi Core Engine). Safe CPU/GPU governor tuning, I/O latency reduction, RAM/VM responsiveness with zero crashes.
+updateJson=https://raw.githubusercontent.com/Rama-X2/performance-booster-miyabi-core/main/update.json

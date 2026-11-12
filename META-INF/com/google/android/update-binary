@@ -1,0 +1,28 @@
+#!/sbin/sh
+#################
+# Magisk Module Package
+#################
+
+# Default permissions
+umask 022
+
+# Setup flashable
+OUTFD=$2
+ZIPFILE=$3
+
+if [ -f /data/adb/magisk/util_functions.sh ]; then
+  . /data/adb/magisk/util_functions.sh
+elif [ -f /data/adb/ksu/bin/util_functions.sh ]; then
+  . /data/adb/ksu/bin/util_functions.sh
+elif [ -f /data/adb/ap/bin/util_functions.sh ]; then
+  . /data/adb/ap/bin/util_functions.sh
+else
+  echo "***********************************"
+  echo " Please install Magisk / KSU / APatch! "
+  echo "***********************************"
+  exit 1
+fi
+
+setup_flashable
+install_module
+exit 0

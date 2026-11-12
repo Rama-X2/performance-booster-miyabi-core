@@ -1,0 +1,115 @@
+#!/system/bin/sh
+# Performance Booster Miyabi Core - CLI Controller
+# Copyright (C) 2026 Rama-X2
+# Licensed under the GNU General Public License, Version 3.0
+# Source: https://github.com/Rama-X2/performance-booster-miyabi-core
+
+if [ "$(id -u)" -ne 0 ]; then
+  echo "[!] Error: Root access required."
+  echo "    Please run with: su -c miyabi-perf <command>"
+  exit 1
+fi
+
+print_cat_banner() {
+  echo "=================================================="
+  echo "           ╔══════════════════════╗               "
+  echo "           ║           (≧◡≦)          ║              "
+  echo "           ║        Miyabi Core       ║              "
+  echo "           ╚══════════════════════╝               "
+  echo "                      ／l、                          "
+  echo "                    （ﾟ､ ｡ ７                        "
+  echo "                     l、  ~ヽ                        "
+  echo "                     じしf_, )ノ                     "
+  echo "   『 Performance Booster Miyabi Core v1.0.0 』   "
+  echo "=================================================="
+  echo " Author : Rama-X2"
+  echo " GitHub : https://github.com/Rama-X2"
+  echo "=================================================="
+}
+
+show_status() {
+  print_cat_banner
+  
+  # Fetch active governor
+  CPU0_GOV=$(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor 2>/dev/null)
+  [ -z "$CPU0_GOV" ] && CPU0_GOV="Unknown"
+  
+  # Fetch VM values
+  VFS_PRESS=$(cat /proc/sys/vm/vfs_cache_pressure 2>/dev/null)
+  DIRTY_RAT=$(cat /proc/sys/vm/dirty_ratio 2>/dev/null)
+  
+  # Fetch Storage Read-ahead
+  FIRST_BLK=$(ls -d /sys/block/sd* /sys/block/mmcblk* 2>/dev/null | head -n 1)
+  if [ -n "$FIRST_BLK" ] && [ -f "$FIRST_BLK/queue/read_ahead_kb" ]; then
+    RA_KB=$(cat "$FIRST_BLK/queue/read_ahead_kb")
+  else
+    RA_KB="Default"
+  fi
+  
+  # Engine status
+  LOG_FILE="/data/adb/modules/performance-booster-miyabi-core/performance_miyabi.log"
+  if [ -f "$LOG_FILE" ]; then
+    ENGINE_STATUS="Active & Running (Optimized)"
+  else
+    ENGINE_STATUS="Standby / Reboot Needed"
+  fi
+  
+  echo " [i] Current Engine Status:"
+  echo "     • Engine State   : $ENGINE_STATUS"
+  echo "     • CPU Governor   : $CPU0_GOV"
+  echo "     • VFS Pressure   : $VFS_PRESS"
+  echo "     • Dirty Ratio    : $DIRTY_RAT%"
+  echo "     • I/O Read Ahead : ${RA_KB} KB"
+  echo "     • Target Group   : top-app (Latency Sensitive)"
+  echo "=================================================="
+  echo " Commands available:"
+  echo "   miyabi-perf status     - Show this status screen"
+  echo "   miyabi-perf boost      - Trigger instant turbo burst & RAM purge"
+  echo "   miyabi-perf balance    - Re-apply balanced gaming profile"
+  echo "   miyabi-perf powersave  - Switch to battery-saving daily profile"
+  echo "   miyabi-perf log        - View recent engine log"
+  echo "=================================================="
+}
+
+case "$1" in
+  boost)
+    print_cat_banner
+    echo " [*] Activating Turbo Burst & Memory Optimization..."
+    sync
+    echo 3 > /proc/sys/vm/drop_caches 2>/dev/null
+    fstrim -v /data 2>/dev/null
+    fstrim -v /cache 2>/dev/null
+    
+    # Boost top-app
+    [ -f /dev/stune/top-app/schedtune.boost ] && echo 20 > /dev/stune/top-app/schedtune.boost 2>/dev/null
+    [ -f /dev/cpuctl/top-app/cpu.uclamp.min ] && echo 20 > /dev/cpuctl/top-app/cpu.uclamp.min 2>/dev/null
+    
+    echo " [✓] Turbo Burst successfully applied!"
+    ;;
+  balance)
+    print_cat_banner
+    echo " [*] Re-applying Balanced Performance Profile..."
+    [ -f /proc/sys/vm/vfs_cache_pressure ] && echo 65 > /proc/sys/vm/vfs_cache_pressure 2>/dev/null
+    [ -f /dev/stune/top-app/schedtune.boost ] && echo 10 > /dev/stune/top-app/schedtune.boost 2>/dev/null
+    [ -f /dev/cpuctl/top-app/cpu.uclamp.min ] && echo 10 > /dev/cpuctl/top-app/cpu.uclamp.min 2>/dev/null
+    echo " [✓] Balanced Gaming Profile active!"
+    ;;
+  powersave)
+    print_cat_banner
+    echo " [*] Applying Battery-Saving Daily Profile..."
+    [ -f /dev/stune/top-app/schedtune.boost ] && echo 0 > /dev/stune/top-app/schedtune.boost 2>/dev/null
+    [ -f /dev/cpuctl/top-app/cpu.uclamp.min ] && echo 0 > /dev/cpuctl/top-app/cpu.uclamp.min 2>/dev/null
+    echo " [✓] Power-Save Profile active!"
+    ;;
+  log)
+    LOG_FILE="/data/adb/modules/performance-booster-miyabi-core/performance_miyabi.log"
+    if [ -f "$LOG_FILE" ]; then
+      cat "$LOG_FILE"
+    else
+      echo "[!] No log file found at $LOG_FILE"
+    fi
+    ;;
+  *)
+    show_status
+    ;;
+esac
