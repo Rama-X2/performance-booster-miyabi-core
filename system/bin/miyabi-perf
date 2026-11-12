@@ -1,5 +1,5 @@
 #!/system/bin/sh
-# Performance Booster Miyabi Core - CLI Controller
+# Performance Booster Miyabi Core - Advanced CLI Dashboard
 # Copyright (C) 2026 Rama-X2
 # Licensed under the GNU General Public License, Version 3.0
 # Source: https://github.com/Rama-X2/performance-booster-miyabi-core
@@ -10,35 +10,45 @@ if [ "$(id -u)" -ne 0 ]; then
   exit 1
 fi
 
+LOG_DIR="/data/adb/modules/performance-booster-miyabi-core"
+LOG_FILE="$LOG_DIR/performance_miyabi.log"
+
 print_cat_banner() {
-  echo "=================================================="
-  echo "           ╔══════════════════════╗               "
-  echo "           ║           (≧◡≦)          ║              "
-  echo "           ║        Miyabi Core       ║              "
-  echo "           ╚══════════════════════╝               "
-  echo "                      ／l、                          "
-  echo "                    （ﾟ､ ｡ ７                        "
-  echo "                     l、  ~ヽ                        "
-  echo "                     じしf_, )ノ                     "
-  echo "   『 Performance Booster Miyabi Core v1.0.0 』   "
-  echo "=================================================="
-  echo " Author : Rama-X2"
-  echo " GitHub : https://github.com/Rama-X2"
-  echo "=================================================="
+  echo "========================================================"
+  echo "             ╔══════════════════════╗                   "
+  echo "             ║     Miyabi Core      ║                   "
+  echo "             ╚══════════════════════╝                   "
+  echo "                        ／l、                            "
+  echo "                      （ﾟ､ ｡ ７                          "
+  echo "                       l、  ~ヽ                          "
+  echo "                       じしf_, )ノ                       "
+  echo "    『 Performance Booster Miyabi Core v1.0.0 』       "
+  echo "========================================================"
+  echo " Author : Rama-X2 | GitHub: https://github.com/Rama-X2"
+  echo " Engine : Advanced Autonomous Kernel & Scheduler Daemon "
+  echo "========================================================"
 }
 
 show_status() {
   print_cat_banner
   
-  # Fetch active governor
+  # RAM Details
+  TOTAL_RAM_KB=$(grep MemTotal /proc/meminfo 2>/dev/null | awk '{print $2}')
+  TOTAL_RAM_MB=$((TOTAL_RAM_KB / 1024))
+  FREE_RAM_KB=$(grep MemAvailable /proc/meminfo 2>/dev/null | awk '{print $2}')
+  FREE_RAM_MB=$((FREE_RAM_KB / 1024))
+  
+  # CPU Details
+  CPU_PRESENT=$(cat /sys/devices/system/cpu/present 2>/dev/null)
   CPU0_GOV=$(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor 2>/dev/null)
   [ -z "$CPU0_GOV" ] && CPU0_GOV="Unknown"
   
-  # Fetch VM values
+  # VM Values
   VFS_PRESS=$(cat /proc/sys/vm/vfs_cache_pressure 2>/dev/null)
-  DIRTY_RAT=$(cat /proc/sys/vm/dirty_ratio 2>/dev/null)
+  WM_SCALE=$(cat /proc/sys/vm/watermark_scale_factor 2>/dev/null)
+  SWAPPINESS=$(cat /proc/sys/vm/swappiness 2>/dev/null)
   
-  # Fetch Storage Read-ahead
+  # Storage Read-ahead
   FIRST_BLK=$(ls -d /sys/block/sd* /sys/block/mmcblk* 2>/dev/null | head -n 1)
   if [ -n "$FIRST_BLK" ] && [ -f "$FIRST_BLK/queue/read_ahead_kb" ]; then
     RA_KB=$(cat "$FIRST_BLK/queue/read_ahead_kb")
@@ -46,63 +56,118 @@ show_status() {
     RA_KB="Default"
   fi
   
-  # Engine status
-  LOG_FILE="/data/adb/modules/performance-booster-miyabi-core/performance_miyabi.log"
-  if [ -f "$LOG_FILE" ]; then
-    ENGINE_STATUS="Active & Running (Optimized)"
+  # Active Dynamic Profile
+  if [ -f "$LOG_DIR/current_profile" ]; then
+    CURRENT_PROF=$(cat "$LOG_DIR/current_profile")
   else
-    ENGINE_STATUS="Standby / Reboot Needed"
+    CURRENT_PROF="BALANCED (Daily Smooth)"
   fi
   
-  echo " [i] Current Engine Status:"
-  echo "     • Engine State   : $ENGINE_STATUS"
-  echo "     • CPU Governor   : $CPU0_GOV"
+  # Active Target PID & Threads
+  ACTIVE_PID=$(cat "$LOG_DIR/active_game_pid" 2>/dev/null)
+  if [ -n "$ACTIVE_PID" ] && [ -d "/proc/$ACTIVE_PID" ]; then
+    ACTIVE_NICE=$(stat -c "%n" /proc/$ACTIVE_PID 2>/dev/null)
+    ACTIVE_COMM=$(cat "/proc/$ACTIVE_PID/comm" 2>/dev/null)
+    RENDER_THREADS=$(ls /proc/$ACTIVE_PID/task 2>/dev/null | wc -l)
+    PID_INFO="PID $ACTIVE_PID ($ACTIVE_COMM, $RENDER_THREADS active threads)"
+  else
+    PID_INFO="None (System in Idle/Daily state)"
+  fi
+  
+  echo " [i] Hardware Topology:"
+  echo "     • Installed RAM  : ${TOTAL_RAM_MB} MB (${FREE_RAM_MB} MB Available)"
+  echo "     • CPU Cores      : $CPU_PRESENT (Governor: $CPU0_GOV)"
+  echo "     • Storage Buffer : ${RA_KB} KB Read-Ahead"
+  echo "--------------------------------------------------------"
+  echo " [i] Live Kernel Engine State:"
+  echo "     • Active Profile : $CURRENT_PROF"
+  echo "     • Boosted Target : $PID_INFO"
   echo "     • VFS Pressure   : $VFS_PRESS"
-  echo "     • Dirty Ratio    : $DIRTY_RAT%"
-  echo "     • I/O Read Ahead : ${RA_KB} KB"
-  echo "     • Target Group   : top-app (Latency Sensitive)"
-  echo "=================================================="
+  echo "     • Watermark Scale: $WM_SCALE"
+  echo "     • Swappiness     : $SWAPPINESS%"
+  echo "     • IPC Engine     : Native Linux Cgroup (Zero Java Overhead)"
+  echo "========================================================"
   echo " Commands available:"
-  echo "   miyabi-perf status     - Show this status screen"
-  echo "   miyabi-perf boost      - Trigger instant turbo burst & RAM purge"
-  echo "   miyabi-perf balance    - Re-apply balanced gaming profile"
-  echo "   miyabi-perf powersave  - Switch to battery-saving daily profile"
-  echo "   miyabi-perf log        - View recent engine log"
-  echo "=================================================="
+  echo "   miyabi-perf status     - Show this complete status screen"
+  echo "   miyabi-perf monitor    - Live interactive real-time monitor"
+  echo "   miyabi-perf boost      - Force immediate Turbo Burst on-demand"
+  echo "   miyabi-perf balance    - Force Balanced Daily Profile"
+  echo "   miyabi-perf powersave  - Force Battery-Saving Daily Profile"
+  echo "   miyabi-perf log        - View initialization & event logs"
+  echo "========================================================"
+}
+
+run_monitor() {
+  clear
+  echo "Starting Live Engine Monitor (Press Ctrl+C to exit)..."
+  sleep 1
+  while true; do
+    clear
+    print_cat_banner
+    
+    # Live top-app PID
+    TOP_PID=""
+    if [ -f "/dev/cpuset/top-app/cgroup.procs" ]; then
+      TOP_PID=$(head -n 1 /dev/cpuset/top-app/cgroup.procs 2>/dev/null)
+    fi
+    
+    TOP_CMD="Idle"
+    TOP_NICE="0"
+    if [ -n "$TOP_PID" ] && [ -d "/proc/$TOP_PID" ]; then
+      TOP_CMD=$(cat "/proc/$TOP_PID/cmdline" 2>/dev/null | tr '\0' ' ' | awk '{print $1}')
+      TOP_NICE=$(cat "/proc/$TOP_PID/stat" 2>/dev/null | awk '{print $19}')
+    fi
+    
+    # Profile
+    PROF="Unknown"
+    [ -f "$LOG_DIR/current_profile" ] && PROF=$(cat "$LOG_DIR/current_profile")
+    
+    echo " [LIVE MONITOR] $(date '+%H:%M:%S')"
+    echo "  • Foreground App   : $TOP_CMD (PID: $TOP_PID)"
+    echo "  • Nice Priority    : $TOP_NICE"
+    echo "  • Active Profile   : $PROF"
+    echo "  • SchedTune Boost  : $(cat /dev/stune/top-app/schedtune.boost 2>/dev/null || cat /dev/cpuctl/top-app/cpu.uclamp.min 2>/dev/null)"
+    echo "  • Governor Limit   : $(cat /sys/devices/system/cpu/cpufreq/policy0/schedutil/up_rate_limit_us 2>/dev/null)us"
+    echo "--------------------------------------------------------"
+    echo " Refreshing every 2s... (Ctrl+C to stop)"
+    sleep 2
+  done
 }
 
 case "$1" in
+  monitor)
+    run_monitor
+    ;;
   boost)
     print_cat_banner
-    echo " [*] Activating Turbo Burst & Memory Optimization..."
+    echo " [*] Activating Immediate Turbo Burst & Flushing RAM..."
     sync
     echo 3 > /proc/sys/vm/drop_caches 2>/dev/null
     fstrim -v /data 2>/dev/null
-    fstrim -v /cache 2>/dev/null
     
-    # Boost top-app
-    [ -f /dev/stune/top-app/schedtune.boost ] && echo 20 > /dev/stune/top-app/schedtune.boost 2>/dev/null
-    [ -f /dev/cpuctl/top-app/cpu.uclamp.min ] && echo 20 > /dev/cpuctl/top-app/cpu.uclamp.min 2>/dev/null
-    
-    echo " [✓] Turbo Burst successfully applied!"
+    [ -f /dev/stune/top-app/schedtune.boost ] && echo 40 > /dev/stune/top-app/schedtune.boost 2>/dev/null
+    [ -f /dev/cpuctl/top-app/cpu.uclamp.min ] && echo 40 > /dev/cpuctl/top-app/cpu.uclamp.min 2>/dev/null
+    echo "FORCED_TURBO (Manual Override)" > "$LOG_DIR/current_profile" 2>/dev/null
+    echo " [✓] Turbo Burst active! Peak CPU/RAM unlocked."
     ;;
   balance)
     print_cat_banner
-    echo " [*] Re-applying Balanced Performance Profile..."
-    [ -f /proc/sys/vm/vfs_cache_pressure ] && echo 65 > /proc/sys/vm/vfs_cache_pressure 2>/dev/null
+    echo " [*] Restoring Balanced Daily Profile..."
+    [ -f /proc/sys/vm/vfs_cache_pressure ] && echo 60 > /proc/sys/vm/vfs_cache_pressure 2>/dev/null
     [ -f /dev/stune/top-app/schedtune.boost ] && echo 10 > /dev/stune/top-app/schedtune.boost 2>/dev/null
     [ -f /dev/cpuctl/top-app/cpu.uclamp.min ] && echo 10 > /dev/cpuctl/top-app/cpu.uclamp.min 2>/dev/null
-    echo " [✓] Balanced Gaming Profile active!"
+    echo "BALANCED (Daily Smooth)" > "$LOG_DIR/current_profile" 2>/dev/null
+    echo " [✓] Balanced Daily Profile active."
     ;;
   powersave)
     print_cat_banner
     echo " [*] Applying Battery-Saving Daily Profile..."
     [ -f /dev/stune/top-app/schedtune.boost ] && echo 0 > /dev/stune/top-app/schedtune.boost 2>/dev/null
     [ -f /dev/cpuctl/top-app/cpu.uclamp.min ] && echo 0 > /dev/cpuctl/top-app/cpu.uclamp.min 2>/dev/null
-    echo " [✓] Power-Save Profile active!"
+    echo "POWERSAVE (Manual Override)" > "$LOG_DIR/current_profile" 2>/dev/null
+    echo " [✓] Power-Save Profile active."
     ;;
   log)
-    LOG_FILE="/data/adb/modules/performance-booster-miyabi-core/performance_miyabi.log"
     if [ -f "$LOG_FILE" ]; then
       cat "$LOG_FILE"
     else

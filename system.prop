@@ -3,24 +3,24 @@
 # Licensed under the GNU General Public License, Version 3.0
 # Source: https://github.com/Rama-X2/performance-booster-miyabi-core
 
-# SurfaceFlinger & Frame Pacing (Smooth UI & Latency Reduction)
+# SurfaceFlinger Pipeline & Latency Reduction
 vendor.perf.framepacing.enable=1
 debug.sf.disable_backpressure=1
 debug.sf.latch_unsignaled=1
 ro.surface_flinger.max_frame_buffer_acquired_buffers=3
 
-# Touch Responsiveness & UI Velocity
+# Touchscreen Velocity & Input Polling
 touch.pressure.scale=0.001
 view.scroll_friction=0.008
 view.touch_slop=2
 
-# Dalvik / ART Compiler Threads & Optimization
+# Dalvik & ART Multi-Threaded Compilation
 dalvik.vm.dexopt.thermal-cutoff=0
 dalvik.vm.dex2oat-threads=4
 dalvik.vm.image-dex2oat-threads=4
 dalvik.vm.boot-dex2oat-threads=4
 
-# Media & Hardware Acceleration
+# Hardware Accelerated UI Rendering
 debug.hwui.renderer=skiagl
 debug.hwui.render_dirty_regions=false
 video.accelerate.hw=1
