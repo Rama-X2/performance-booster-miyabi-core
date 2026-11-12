@@ -1,4 +1,4 @@
-# Performance Booster Miyabi Core
+# 🌸 Performance Booster Miyabi Core
 
 <div align="center">
 
